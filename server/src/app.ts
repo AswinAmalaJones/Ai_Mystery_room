@@ -23,6 +23,12 @@ function isAllowedOrigin(origin: string | undefined, host: string | undefined): 
   if (allowedOrigins.has(origin)) return true;
   if (host) {
     if (origin === `http://${host}` || origin === `https://${host}`) return true;
+    try {
+      const originUrl = new URL(origin);
+      if (originUrl.hostname === host.split(':')[0]) return true;
+    } catch {
+      // ignore invalid URL
+    }
   }
   return false;
 }
@@ -36,12 +42,14 @@ app.use(
 );
 
 app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || isAllowedOrigin(origin, undefined)) return callback(null, true);
-      return callback(new Error('Origin is not allowed by CORS'));
-    },
-    credentials: true,
+  cors((req, callback) => {
+    const origin = req.headers.origin;
+    const host = req.headers.host;
+    const allowed = isAllowedOrigin(origin, host);
+    callback(null, {
+      origin: allowed,
+      credentials: true,
+    });
   })
 );
 

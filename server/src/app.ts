@@ -352,6 +352,8 @@ app.post('/api/v1/mysteries/:id/accusation', auth, asyncRoute(async (req, res) =
 // Serve static frontend build in production or when client/dist exists
 const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
 const clientDistPath = path.resolve(moduleDirectory, '../../client/dist');
+console.log('Frontend path:', clientDistPath);
+console.log('Frontend exists:', fs.existsSync(clientDistPath));
 
 if (fs.existsSync(clientDistPath)) {
   app.use(express.static(clientDistPath));

@@ -19,7 +19,7 @@ async function start() {
   console.log('MongoDB connected successfully');
 
   await new Promise<void>((resolve, reject) => {
-    const server = app.listen(environment.port);
+    const server = app.listen(environment.port, '0.0.0.0');
     server.once('listening', () => {
       console.log(`AI Mystery Room API listening on ${environment.port}`);
       resolve();

@@ -4,7 +4,9 @@ import { dirname, resolve } from 'node:path';
 
 const moduleDirectory = dirname(fileURLToPath(import.meta.url));
 
+// Load server-specific .env or monorepo root .env if present
 dotenv.config({ path: resolve(moduleDirectory, '../.env') });
+dotenv.config({ path: resolve(moduleDirectory, '../../.env') });
 
 function optionalEnvironmentVariable(name: string) {
   const value = process.env[name]?.trim();
@@ -22,7 +24,9 @@ function requiredEnvironmentVariable(name: 'MONGODB_URI' | 'SESSION_SECRET') {
 }
 
 function clientOrigins() {
-  const origins = (optionalEnvironmentVariable('CLIENT_ORIGIN') ?? 'http://localhost:5173')
+  const configured = optionalEnvironmentVariable('CLIENT_ORIGIN');
+  const defaults = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+  const origins = (configured ?? defaults.join(','))
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
@@ -32,6 +36,7 @@ function clientOrigins() {
 
 export const environment = {
   clientOrigins: clientOrigins(),
+  cookieSameSite: (optionalEnvironmentVariable('COOKIE_SAME_SITE') as 'lax' | 'none' | 'strict') || 'lax',
   mongoDbUri: requiredEnvironmentVariable('MONGODB_URI'),
   nodeEnv: optionalEnvironmentVariable('NODE_ENV') ?? 'development',
   port: Number(optionalEnvironmentVariable('PORT') ?? '5000'),

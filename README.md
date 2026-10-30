@@ -35,13 +35,55 @@ The `Mystery` model stores canonical solution, hints, and required clue IDs in f
 
 Account profile, case content, and gameplay progress are stored in MongoDB. Mysteries are fictional. Do not include personal or confidential information in premises. The app does not currently offer account deletion. Keep `.env` private; only `VITE_` variables may be exposed to the client.
 
-## Deployment notes
+## Deployment Guide
 
-Deploy the client as a static Vite build and the API as a persistent Node service. Set the production `CLIENT_ORIGIN`, `MONGODB_URI`, `GEMINI_API_KEY`, `GEMINI_MODEL`, and `SESSION_SECRET` in the hosting environment. Use HTTPS, configure trusted proxy behavior where required, and restrict MongoDB network access. Health check: `GET /api/v1/health`.
+You can deploy AI Mystery Room as:
+1. **Unified Full-Stack Service (Recommended)**: Render, Railway, or Docker where Express serves both the API and the React SPA. This avoids CORS complexity and third-party cookie restrictions.
+2. **Decoupled Architecture**: Frontend on Vercel / Netlify and backend API on Render / Railway.
 
-## Current implementation notes
+### 1. Prerequisites for Production
+- **MongoDB Atlas** (Free Cluster):
+  1. Create a free cluster at [MongoDB Atlas](https://www.mongodb.com/atlas).
+  2. Create a Database User with read/write credentials.
+  3. Under **Network Access**, add `0.0.0.0/0` (Allow Access from Anywhere), as cloud hosts use dynamic IP pools.
+  4. Obtain the connection string: `mongodb+srv://<user>:<password>@cluster0.mongodb.net/ai_mystery_room?retryWrites=true&w=majority`.
+- **Google Gemini API Key**:
+  - Get a free key at [Google AI Studio](https://aistudio.google.com/).
+- **Session Secret**:
+  - Generate a secure 32+ character string (e.g. using `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`).
 
-This repository was created from the product specification. Before deployment, install dependencies and run the documented typecheck/build commands, configure a production Gemini model and hosting environment, and perform an end to end review with a real MongoDB and Gemini configuration.
+### 2. Option A: Deploy on Render (Recommended - Free & Easy)
+1. Push your repository to GitHub.
+2. Log in to [Render](https://render.com/) and click **New > Web Service**.
+3. Connect your repository.
+4. Configure service settings:
+   - **Environment**: `Node`
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm start`
+   - **Health Check Path**: `/api/v1/health`
+5. Add the following **Environment Variables**:
+   - `NODE_ENV`: `production`
+   - `MONGODB_URI`: your MongoDB Atlas connection string
+   - `GEMINI_API_KEY`: your Gemini API key
+   - `GEMINI_MODEL`: `gemini-2.5-flash`
+   - `SESSION_SECRET`: your 32+ character random secret
+   - *(Optional)* `CLIENT_ORIGIN`: your Render service URL (e.g., `https://ai-mystery-room.onrender.com`)
+6. Click **Create Web Service**. Render will build and deploy your app.
+
+### 3. Option B: Deploy with Docker / Railway / Fly.io
+A production multi-stage [Dockerfile](file:///c:/Users/ADMIN/OneDrive/Desktop/AI%20Mystery%20Room/Dockerfile) is included:
+```bash
+docker build -t ai-mystery-room .
+docker run -p 5000:5000 \
+  -e MONGODB_URI="your_mongodb_uri" \
+  -e GEMINI_API_KEY="your_api_key" \
+  -e SESSION_SECRET="your_secret" \
+  ai-mystery-room
+```
+
+### 4. Option C: Decoupled (Vercel Frontend + Render Backend)
+- **Backend on Render**: Set `CLIENT_ORIGIN=https://your-app.vercel.app` and `COOKIE_SAME_SITE=none`.
+- **Frontend on Vercel**: Connect the repo. The included [vercel.json](file:///c:/Users/ADMIN/OneDrive/Desktop/AI%20Mystery%20Room/vercel.json) rewrites `/api/*` requests to your backend, maintaining seamless same-origin session cookies.
 
 ## Windows commands
 

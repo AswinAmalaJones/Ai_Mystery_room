@@ -356,6 +356,7 @@ console.log('Frontend path:', clientDistPath);
 console.log('Frontend exists:', fs.existsSync(clientDistPath));
 
 if (fs.existsSync(clientDistPath)) {
+  app.use('/assets', express.static(path.join(clientDistPath, 'assets')));
   app.use(express.static(clientDistPath));
 
   app.get('*', (req, res, next) => {
